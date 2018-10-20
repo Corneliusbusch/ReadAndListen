@@ -36,6 +36,10 @@ const int ledPin =  13;      // the number of the LED pin
 // variables will change:
 int buttonState = 0;         // variable for reading the pushbutton status
 
+int prevx = 0;
+int prevy = 0;
+int prevz = 0;
+bool isButtonPressed = false;
 
 void setup() {
   // initialize the serial communications:
@@ -61,24 +65,32 @@ void loop() {
   buttonState = digitalRead(buttonPin);
   // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
   if (buttonState == HIGH) {
-    // turn LED on:
+    if(isButtonPressed){
+      isButtonPressed = false;
+      Serial.println("Stop reading");
+    } else{
+      Serial.println("Start reading");
+      isButtonPressed = true;
+    }
     digitalWrite(ledPin, HIGH);
   } else {
     // turn LED off:
     digitalWrite(ledPin, LOW);
   }
 
-  // print the sensor values:
-  Serial.print(analogRead(xpin));
-  // print a tab between values:
-  Serial.print("\t");
-  Serial.print(analogRead(ypin));
-  // print a tab between values:
-  Serial.print("\t");
-  Serial.print(analogRead(zpin));
-  Serial.println();
+  if(isButtonPressed){
+    Serial.print("x: ");
+    Serial.print(analogRead(xpin));
+    Serial.print("\t");
+    Serial.print("y: ");
+    Serial.print(analogRead(ypin));
+    Serial.print("\t");
+    Serial.print("z: ");
+    Serial.print(analogRead(zpin));
+    Serial.println();
+  }
+
   // delay before next reading:
   delay(100);
-
 
 }
