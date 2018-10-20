@@ -40,6 +40,9 @@ int prevx = 0;
 int prevy = 0;
 int prevz = 0;
 bool isButtonPressed = false;
+int startTime = 0;
+int lineNumber = 0;
+
 
 void setup() {
   // initialize the serial communications:
@@ -65,10 +68,10 @@ void loop() {
   buttonState = digitalRead(buttonPin);
   // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
   if (buttonState == HIGH) {
-    if(isButtonPressed){
+    if (isButtonPressed) {
       isButtonPressed = false;
       Serial.println("Stop reading");
-    } else{
+    } else {
       Serial.println("Start reading");
       isButtonPressed = true;
     }
@@ -78,19 +81,63 @@ void loop() {
     digitalWrite(ledPin, LOW);
   }
 
-  if(isButtonPressed){
-    Serial.print("x: ");
-    Serial.print(analogRead(xpin));
-    Serial.print("\t");
-    Serial.print("y: ");
-    Serial.print(analogRead(ypin));
-    Serial.print("\t");
-    Serial.print("z: ");
-    Serial.print(analogRead(zpin));
-    Serial.println();
+  if (isButtonPressed) {
+    //Serial.print("x: ");
+    //Serial.print(analogRead(xpin));
+    //Serial.print("\t");
+    //Serial.print("y: ");
+    //Serial.print(analogRead(ypin));
+    //Serial.print("\t");
+    //Serial.print("z: ");
+    //Serial.print(analogRead(zpin));
+    //Serial.println();
+    int currentx = analogRead(xpin);
+    int currenty = analogRead(ypin);
+    int currentz = analogRead(zpin);
+    if (detectStrongChange(prevy, currenty)) {
+      prevy = currenty;
+      //Serial.println("Movement detected in y!");
+      if (startTime == 0) {
+        // This is the first movement. We start the timer.
+        startTime = millis();
+      } else {
+        int current = millis();
+        int readingTime = current - startTime;
+        if (readingTime >= 700) {
+          startTime = millis();
+          Serial.print("line");
+          Serial.print(lineNumber);
+          Serial.print(" time in seconds: ");
+          Serial.println(float(readingTime) / 1000);
+          lineNumber++;
+        }
+
+      }
+    } else {
+      //Serial.println("No movement");
+    }
+    //detectStrongChange(prevy, currenty);
+    //detectStrongChange(prevz, currentz);
   }
 
   // delay before next reading:
   delay(100);
 
+}
+
+bool detectStrongChange(int prev, int current) {
+  //Serial.print("prev: ");
+  //Serial.print(prev);
+  //Serial.print("\t");
+  //Serial.print("current: ");
+  //Serial.print(current);
+  //Serial.print("\t");
+  //Serial.print("diff: ");
+  int diff = abs(current - prev);
+  //Serial.println(diff);
+  if (diff >= 3) {
+    return true;
+  } else {
+    return false;
+  }
 }
