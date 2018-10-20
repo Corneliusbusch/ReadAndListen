@@ -30,6 +30,12 @@ const int powerpin = 19;              // analog input pin 5 -- voltage
 const int xpin = A3;                  // x-axis of the accelerometer
 const int ypin = A2;                  // y-axis
 const int zpin = A1;                  // z-axis (only on 3-axis models)
+const int buttonPin = 2;     // the number of the pushbutton pin
+const int ledPin =  13;      // the number of the LED pin
+
+// variables will change:
+int buttonState = 0;         // variable for reading the pushbutton status
+
 
 void setup() {
   // initialize the serial communications:
@@ -39,13 +45,29 @@ void setup() {
   // This makes it possible to directly connect the breakout board to the
   // Arduino. If you use the normal 5V and GND pins on the Arduino,
   // you can remove these lines.
+  // accelerometer
   pinMode(groundpin, OUTPUT);
   pinMode(powerpin, OUTPUT);
   digitalWrite(groundpin, LOW);
   digitalWrite(powerpin, HIGH);
+
+  //button
+  pinMode(ledPin, OUTPUT);
+  // initialize the pushbutton pin as an input:
+  pinMode(buttonPin, INPUT);
 }
 
 void loop() {
+  buttonState = digitalRead(buttonPin);
+  // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
+  if (buttonState == HIGH) {
+    // turn LED on:
+    digitalWrite(ledPin, HIGH);
+  } else {
+    // turn LED off:
+    digitalWrite(ledPin, LOW);
+  }
+
   // print the sensor values:
   Serial.print(analogRead(xpin));
   // print a tab between values:
@@ -57,4 +79,6 @@ void loop() {
   Serial.println();
   // delay before next reading:
   delay(100);
+
+
 }
