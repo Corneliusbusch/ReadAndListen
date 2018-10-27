@@ -41,6 +41,7 @@ const int zpin = A1;                  // z-axis (only on 3-axis models)
 const int buttonPin = 8;     // the number of the pushbutton pin
 const int ledPin =  13;      // the number of the LED pin
 const int DATA_NUMBER = 2;    //current time, speed
+const int MIN_TIME = 700;
 
 // variables will change:
 int buttonState = 0;         // variable for reading the pushbutton status
@@ -48,7 +49,13 @@ int buttonState = 0;         // variable for reading the pushbutton status
 int prevx = 0;
 int prevy = 0;
 int prevz = 0;
+
+// button variables
 bool isButtonPressed = false;
+unsigned long lastDebounceTime = 0;  
+unsigned long debounceDelay = 100;
+
+// data variables
 int startTime = 0;
 int lineNumber = 0;
 
@@ -58,15 +65,11 @@ void setup() {
   Serial.begin(9600);
 
   //Set up Sd card
-  Serial.println("Setting up file on SD card");
-  setupSDFile();
+  //Serial.println("Setting up file on SD card");
+  //setupSDFile();
   
-  SoftSerial.begin(9600);                  // the SoftSerial baud rate
+  //SoftSerial.begin(9600);                  // the SoftSerial baud rate
 
-  // Provide ground and power by using the analog inputs as normal digital pins.
-  // This makes it possible to directly connect the breakout board to the
-  // Arduino. If you use the normal 5V and GND pins on the Arduino,
-  // you can remove these lines.
   // accelerometer
   pinMode(groundpin, OUTPUT);
   pinMode(powerpin, OUTPUT);
@@ -80,20 +83,21 @@ void setup() {
 }
 
 void loop() {
-  buttonState = digitalRead(buttonPin);
-  // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
-  if (buttonState == HIGH) {
-    if (isButtonPressed) {
-      isButtonPressed = false;
-      Serial.println("Stop reading");
-    } else {
-      Serial.println("Start reading");
-      isButtonPressed = true;
-    }
-    digitalWrite(ledPin, HIGH);
-  } else {
-    // turn LED off:
-    digitalWrite(ledPin, LOW);
+  if((millis() - lastDebounceTime) > debounceDelay){
+    buttonState = digitalRead(buttonPin);
+    // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
+    if (buttonState == HIGH) {
+      if (isButtonPressed) {
+        isButtonPressed = false;
+        Serial.println("Stop reading");
+        digitalWrite(ledPin, LOW);
+      } else {
+        Serial.println("Start reading");
+        isButtonPressed = true;
+        digitalWrite(ledPin, HIGH);
+      }
+    } 
+    lastDebounceTime = millis();
   }
 
   if (isButtonPressed) {
@@ -119,15 +123,15 @@ void loop() {
       } else {
         int current = millis();
         readingTime = current - startTime;
-        if (readingTime >= 700) {
+        if (readingTime >= MIN_TIME) {
           startTime = millis();
           Serial.print("line");
           Serial.print(lineNumber);
           Serial.print(" time in seconds: ");
           Serial.println(float(readingTime) / 1000);
           lineNumber++;
-          String dataArr[DATA_NUMBER] = {String(lineNumber), String(float(readingTime)/ 1000)};
-          writeToFile(dataArr);
+          //String dataArr[DATA_NUMBER] = {String(lineNumber), String(float(readingTime)/ 1000)};
+          //writeToFile(dataArr);
         }
 
       }
