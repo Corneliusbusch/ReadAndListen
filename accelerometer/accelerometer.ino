@@ -1,4 +1,4 @@
-/*
+    /*
   ADXL3xx
 
   Reads an Analog Devices ADXL3xx accelerometer and communicates the
@@ -26,6 +26,10 @@
 
 #include <SoftwareSerial.h>
 #include <SD.h>
+#include <Wire.h>
+#include "RTClib.h"
+
+RTC_DS1307 rtc;
 
 #define CHIP_SELECT 10                         // For an Uno it's 10
 
@@ -40,22 +44,20 @@ const int ypin = A2;                  // y-axis
 const int zpin = A1;                  // z-axis (only on 3-axis models)
 const int buttonPin = 8;     // the number of the pushbutton pin
 const int ledPin =  13;      // the number of the LED pin
-const int DATA_NUMBER = 2;    //current time, speed
+const int DATA_NUMBER = 4;    //line number, date, current time, speed
 const int MIN_TIME = 700;
+char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
 // variables will change:
 int buttonState = 0;         // variable for reading the pushbutton status
 
-int prevx = 0;
-int prevy = 0;
-int prevz = 0;
-
 // button variables
 bool isButtonPressed = false;
 unsigned long lastDebounceTime = 0;  
-unsigned long debounceDelay = 100;
+unsigned long debounceDelay = 150;
 
 // data variables
+int prevy = 0;
 int startTime = 0;
 int lineNumber = 0;
 
@@ -65,10 +67,27 @@ void setup() {
   Serial.begin(9600);
 
   //Set up Sd card
-  //Serial.println("Setting up file on SD card");
-  //setupSDFile();
+  Serial.println("Setting up file on SD card");
+  setupSDFile();
   
-  //SoftSerial.begin(9600);                  // the SoftSerial baud rate
+  SoftSerial.begin(9600);                  // the SoftSerial baud rate
+
+  //Real Time Clock Set Up
+  while (!Serial); // for Leonardo/Micro/Zero
+
+  if (! rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    while (1);
+  }
+
+  if (! rtc.isrunning()) {
+    Serial.println("RTC is NOT running!");
+    // following line sets the RTC to the date & time this sketch was compiled
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    // This line sets the RTC with an explicit date & time, for example to set
+    // January 21, 2014 at 3am you would call:
+    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
+  }
 
   // accelerometer
   pinMode(groundpin, OUTPUT);
@@ -76,13 +95,14 @@ void setup() {
   digitalWrite(groundpin, LOW);
   digitalWrite(powerpin, HIGH);
 
-  //button
+  // LED pin
   pinMode(ledPin, OUTPUT);
   // initialize the pushbutton pin as an input:
   pinMode(buttonPin, INPUT);
 }
 
-void loop() {
+void loop() {  
+  
   if((millis() - lastDebounceTime) > debounceDelay){
     buttonState = digitalRead(buttonPin);
     // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
@@ -101,19 +121,9 @@ void loop() {
   }
 
   if (isButtonPressed) {
-    //Serial.print("x: ");
-    //Serial.print(analogRead(xpin));
-    //Serial.print("\t");
-    //Serial.print("y: ");
-    //Serial.print(analogRead(ypin));
-    //Serial.print("\t");
-    //Serial.print("z: ");
-    //Serial.print(analogRead(zpin));
-    //Serial.println();
-    int currentx = analogRead(xpin);
     int currenty = analogRead(ypin);
-    int currentz = analogRead(zpin);
     if (detectStrongChange(prevy, currenty)) {
+      DateTime now = rtc.now();
       prevy = currenty;
       int readingTime;
       //Serial.println("Movement detected in y!");
@@ -125,22 +135,14 @@ void loop() {
         readingTime = current - startTime;
         if (readingTime >= MIN_TIME) {
           startTime = millis();
-          Serial.print("line");
-          Serial.print(lineNumber);
-          Serial.print(" time in seconds: ");
-          Serial.println(float(readingTime) / 1000);
           lineNumber++;
-          //String dataArr[DATA_NUMBER] = {String(lineNumber), String(float(readingTime)/ 1000)};
-          //writeToFile(dataArr);
+          String realDate = String(now.day()) + '/' + String(now.month()) +'/' + String(now.year());
+          String realTime = String(now.hour()) + ':'+ String(now.minute()) + ':' + String(now.second());
+          String dataArr[DATA_NUMBER] = {String(lineNumber), realDate, realTime, String(float(readingTime)/ 1000)};
+          writeToFile(dataArr);
         }
-
       }
-
-    } else {
-      //Serial.println("No movement");
     }
-    //detectStrongChange(prevy, currenty);
-    //detectStrongChange(prevz, currentz);
   }
 
   // delay before next reading:
