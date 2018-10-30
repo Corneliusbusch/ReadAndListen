@@ -69,7 +69,7 @@ void setup() {
   //Set up Sd card
   Serial.println("Setting up file on SD card");
   setupSDFile();
-  
+  /*
   SoftSerial.begin(9600);                  // the SoftSerial baud rate
 
   //Real Time Clock Set Up
@@ -94,7 +94,7 @@ void setup() {
   pinMode(powerpin, OUTPUT);
   digitalWrite(groundpin, LOW);
   digitalWrite(powerpin, HIGH);
-
+*/
   // LED pin
   pinMode(ledPin, OUTPUT);
   // initialize the pushbutton pin as an input:
@@ -119,7 +119,7 @@ void loop() {
     } 
     lastDebounceTime = millis();
   }
-
+/*
   if (isButtonPressed) {
     int currenty = analogRead(ypin);
     if (detectStrongChange(prevy, currenty)) {
@@ -143,7 +143,7 @@ void loop() {
         }
       }
     }
-  }
+  }*/
 
   // delay before next reading:
   delay(100);
