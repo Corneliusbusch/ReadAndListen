@@ -44,7 +44,7 @@ const int ypin = A2;                  // y-axis
 const int zpin = A1;                  // z-axis (only on 3-axis models)
 const int buttonPin = 8;     // the number of the pushbutton pin
 const int ledPin =  6;      // the number of the LED pin
-const int DATA_NUMBER = 4;    //line number, date, current time, speed
+const int DATA_NUMBER = 5;    //line number, date, current time, speed
 const int MIN_TIME = 700;
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
@@ -63,7 +63,7 @@ int lineNumber = 0;
 
 
 void setup() {
-  // initialize the serial communications:
+  // initialize the serial communications
   Serial.begin(9600);
 
   //Set up Sd card
@@ -71,6 +71,9 @@ void setup() {
   setupSDFile();
   
   SoftSerial.begin(9600);                  // the SoftSerial baud rate
+  String comment[2] = {"comment", "Start Writing"};
+  writeToFile(comment, 0);
+
 
   //Real Time Clock Set Up
   while (!Serial); // for Leonardo/Micro/Zero
@@ -138,8 +141,8 @@ void loop() {
           lineNumber++;
           String realDate = String(now.day()) + '/' + String(now.month()) +'/' + String(now.year());
           String realTime = String(now.hour()) + ':'+ String(now.minute()) + ':' + String(now.second());
-          String dataArr[DATA_NUMBER] = {String(lineNumber), realDate, realTime, String(float(readingTime)/ 1000)};
-          writeToFile(dataArr);
+          String dataArr[DATA_NUMBER] = {"data", String(lineNumber), realDate, realTime, String(float(readingTime)/ 1000)};
+          writeToFile(dataArr, 1);
         }
       }
     }
@@ -200,24 +203,28 @@ void setupSDFile()
   Serial.println(filename);
 }
 
-void writeToFile(String* data){
-
-  String dataString = "";
-  for(int i=0; i < DATA_NUMBER; i++){
-    if(i==0){
-  delay(100);
-      dataString = data[i];
-    } else{
-      dataString += ", " + data[i];
+void writeToFile(String* data, int mode){
+  if(mode >=1){
+  
+    String dataString = "";
+    for(int i=0; i < DATA_NUMBER; i++){
+      if(i==0){
+    delay(100);
+        dataString = data[i];
+      } else{
+        dataString += ", " + data[i];
+      }
+    }
+    
+    if (logfile) 
+    {
+      logfile.println(dataString);
+      Serial.println(dataString);
     }
   }
-  
-  if (logfile) 
-  {
-    logfile.println(dataString);
-
-    // print to the serial port too:
-    Serial.println(dataString);
+  else{
+    logfile.println(data[0]+"," + data[1]);
+    Serial.println(data[0]+"," + data[1]);
   }
 
   logfile.flush();
